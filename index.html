@@ -25,7 +25,7 @@ const sb = supabase.createClient("https://nlhembjbyotzfyzxlmpa.supabase.co", "sb
     async function openApp() {
       const { data, error } = await sb.functions.invoke("get-app", { body: { deviceId } });
       if (error) {
-        msg.textContent = error.context ? await error.context.text() : "Errore";
+msg.textContent = (error.context && error.context.text) ? await error.context.text() : error.message;
         return;
       }
       document.open(); document.write(data); document.close();
