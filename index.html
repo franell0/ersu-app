@@ -37,7 +37,7 @@ const sb = supabase.createClient("https://nlhembjbyotzfyzxlmpa.supabase.co", "sb
         email: document.getElementById("email").value,
         password: document.getElementById("pw").value,
       });
-      if (error) { msg.textContent = "Credenziali errate"; return; }
+if (error) { msg.textContent = error.message; return; }
       openApp();
     });
 
