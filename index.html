@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f7f7f7">
+<title>Servizio Ristorazione</title>
+
+<!-- Icone e Integrazione PWA / Schermata Home -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mensa">
+<link rel="manifest" href="manifest.json">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TEMI ============ */
+:root{
+  --bg:#ffffff; --hdr:#f7f7f7; --hdr-line:#d9d9d9; --hdr-text:#000;
+  --card:#ffffff; --card-shadow:0 2px 14px rgba(0,0,0,.10);
+  --primary:#0577b1; --on-primary:#fff; --name:#0577b1;
+  --text:#555; --text-strong:#333; --muted:#666;
+  --tab:#f8f8f8; --tab-line:#d6d6d6; --tab-off:#666; --tab-on:#0577b1;
+  --green:#088008; --green-name:#6aab3c; --green-small:#2fb34a;
+  --grey-btn:#808080; --lower:#eeeeee; --lower-text:#666;
+  --track:#f2f2f4; --track-line:#d9d9d9;
+  --radius-btn:12px; --btn-tt:none; --btn-ls:0;
+  --font:"Barlow",system-ui,sans-serif;
+}
+html[data-os="android"]{
+  --bg:#111111; --hdr:#1f1f1f; --hdr-line:#1f1f1f; --hdr-text:#fff;
+  --card:#1e1e1e; --card-shadow:none;
+  --primary:#6fd3ff; --on-primary:#0b0b0b; --name:#6fd3ff;
+  --text:#9a9a9a; --text-strong:#bdbdbd; --muted:#8a8a8a;
+  --tab:#1f1f1f; --tab-line:#1f1f1f; --tab-off:#c8c8c8; --tab-on:#6fd3ff;
+  --green:#007f00; --green-name:#b0d892; --green-small:#04b449;
+  --grey-btn:#5c5c5c; --lower:#ededed; --lower-text:#939393;
+  --track:#f4f4f4; --track-line:#f4f4f4;
+  --radius-btn:3px; --btn-tt:uppercase; --btn-ls:.12em;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overscroll-behavior:none}
+body{display:flex;justify-content:center}
+button{font:inherit;border:0;background:none;color:inherit;cursor:pointer;padding:0}
+svg{display:block}
+
+#app{position:relative;width:100%;max-width:440px;height:100dvh;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+@media (min-width:600px){ body{background:#cfd4d8} html[data-os="android"] body{background:#2a2a2a} #app{height:min(100dvh,900px);margin:auto;border-radius:28px;box-shadow:0 10px 50px rgba(0,0,0,.35)} body{align-items:center} }
+
+/* ============ HEADER ============ */
+.hdr{flex:none;height:46px;background:var(--hdr);border-bottom:1px solid var(--hdr-line);display:flex;align-items:center;position:relative;color:var(--hdr-text)}
+.hdr .title{position:absolute;left:0;right:0;text-align:center;font-weight:700;font-size:18px;letter-spacing:.01em;pointer-events:none}
+.hdr .lbtn{position:relative;z-index:1;height:100%;display:flex;align-items:center;gap:2px;padding:0 10px;color:var(--primary);font-size:18px;font-weight:500}
+.hdr .lbtn.menu{color:var(--primary);padding:0 14px}
+html[data-os="android"] .hdr{height:56px}
+html[data-os="android"] .hdr .title{position:static;text-align:left;font-weight:500;font-size:20px;padding-left:6px}
+html[data-os="android"] .hdr .lbtn{color:#fff;padding:0 16px 0 14px}
+html[data-os="android"] .hdr .lbtn .bk-txt{display:none}
+.ic-chev,.ic-arrow{display:none}
+html:not([data-os="android"]) .ic-chev{display:block}
+html[data-os="android"] .ic-arrow{display:block}
+
+/* ============ CONTENUTO ============ */
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative}
+.view{display:none;min-height:100%}
+.view.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+.pad{padding:16px}
+
+.card{background:var(--card);border-radius:12px;box-shadow:var(--card-shadow);overflow:hidden;position:relative}
+html[data-os="android"] .card{border-radius:2px}
+
+.avatar{border-radius:50%;overflow:hidden;background:#c9d3db;margin:0 auto}
+.avatar svg{width:100%;height:100%}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+html:not([data-os="android"]) .avatar.oval{border-radius:50%/50%}
+
+/* HOME */
+.home{padding:14px 10px 20px;text-align:center}
+.home .avatar{width:112px;height:128px}
+html[data-os="android"] .home .avatar{width:136px;height:136px}
+.home .who{color:var(--name);font-size:21px;font-weight:500;letter-spacing:.02em;margin:22px 0 18px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;border-radius:var(--radius-btn);
+  background:var(--primary);color:var(--on-primary);font-size:15px;font-weight:500;text-transform:var(--btn-tt);letter-spacing:var(--btn-ls);transition:filter .15s}
+.btn:active{filter:brightness(.85)}
+html[data-os="android"] .btn{min-height:36px;font-size:14px}
+.pills{display:grid;grid-template-columns:1fr 1fr 1fr;margin:20px 0 22px}
+.pill{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pill b{background:var(--primary);color:var(--on-primary);font-size:11px;font-weight:700;border-radius:7px;padding:5px 12px;min-width:46px}
+html[data-os="android"] .pill b{border-radius:3px;padding:7px 14px;font-size:11.5px}
+.pill span{color:var(--primary);font-size:14px;font-weight:500}
+.meals{display:flex;flex-direction:column;gap:8px}
+html[data-os="android"] .meals{gap:5px}
+
+/* TABBAR */
+.tabbar{flex:none;height:62px;background:var(--tab);border-top:1px solid var(--tab-line);display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--tab-off);font-size:11.5px;font-weight:500;letter-spacing:.01em}
+.tab.on{color:var(--tab-on)}
+.tab svg{width:28px;height:28px}
+.tabbar.hidden{display:none}
+
+/* REGISTRAZIONE */
+.reg{padding:24px 16px}
+.reg .card{padding:44px 26px 30px;text-align:center}
+.reg .avatar{width:124px;height:142px}
+html[data-os="android"] .reg .avatar{width:150px;height:150px}
+.reg .nm{margin-top:34px;font-size:15.5px;color:var(--text-strong);letter-spacing:.03em;font-weight:500}
+.reg .mat{font-size:13px;margin-top:4px;color:var(--muted)}
+.reg .msg{font-size:13.5px;line-height:1.5;margin:20px 8px 0;color:var(--text)}
+.reg .search{font-size:13px;margin-top:20px;min-height:16px;color:var(--text)}
+.spin{width:20px;height:20px;margin:6px auto 0}
+.spin.hide{visibility:hidden}
+.track{position:relative;height:24px;border-radius:12px;background:var(--track);border:1px solid var(--track-line);margin-top:16px;overflow:hidden}
+.fill{position:absolute;left:3px;top:3px;bottom:3px;width:16px;border-radius:9px;background:var(--primary);transition:width .25s ease-in-out}
+.track.done .fill{width:calc(100% - 6px)}
+html[data-os="android"] .reg .card{padding-top:44px}
+
+/* RICEVUTA */
+.ric{padding:24px 16px}
+.ric .card{padding:8px 0 30px}
+.ric .head{display:flex;align-items:center;gap:2px;padding:12px 18px 10px;border-bottom:1px solid #ddd;margin-left:18px;padding-left:0}
+html[data-os="android"] .ric .head{border-bottom-color:#2a2a2a}
+.ric .head .avatar{width:36px;height:36px;margin:0;flex:none}
+.ric .head .nm{color:var(--green-name);font-size:21px;font-weight:500;letter-spacing:.02em}
+.ric .big{font-size:58px;line-height:1.38;color:#666;font-weight:500;padding:14px 22px 0;letter-spacing:.01em;word-break:break-word}
+html[data-os="android"] .ric .big{color:#939393;font-size:46px;line-height:1.3}
+.ric .when{font-size:15px;color:var(--text);padding:0 22px;line-height:1.55}
+.ric .actions{padding:10px 22px 0;display:flex;flex-direction:column;gap:6px}
+.ric .actions .btn{min-height:52px;border-radius:16px;font-size:18px}
+html[data-os="android"] .ric .actions .btn{min-height:42px;border-radius:2px;font-size:14px}
+.btn.green{background:var(--green);color:#fff}
+html[data-os="android"] .btn.green{color:#0b0b0b}
+.btn.grey{background:var(--grey-btn);color:#fff}
+.btn.blue{background:var(--primary);color:var(--on-primary)}
+.ric .state{display:flex;align-items:center;gap:8px;padding:26px 22px 0;font-weight:600;font-size:16px}
+.ric .state.pren{color:var(--green-small);font-size:14px}
+.ric .state.cons{color:var(--primary)}
+
+/* CONFERMA */
+.conf{padding:24px 16px}
+.conf .card{text-align:center}
+.conf .top{padding:20px 20px 0}
+.conf .avatar{width:146px;height:166px}
+html[data-os="android"] .conf .avatar{width:140px;height:140px}
+.conf .nm{font-size:26px;color:#666;letter-spacing:.02em;margin-top:26px;font-weight:500}
+html[data-os="android"] .conf .nm{color:#939393;font-size:22px}
+.conf .chk{width:72px;height:72px;border-radius:50%;margin:22px auto 0;display:grid;place-items:center;background:var(--green)}
+.conf .chk.grey{background:#808080}
+.conf .lbl{font-size:16px;color:#666;margin:10px 0 0;padding-bottom:8px}
+html[data-os="android"] .conf .lbl{color:#bdbdbd;font-size:14px}
+.conf .lower{background:var(--lower);border-top:1.5px solid #c8c8c8;padding:14px 10px 18px;color:var(--lower-text);margin-top:6px}
+html[data-os="android"] .conf .lower{border-top:0}
+.conf .lower .m{font-size:40px;font-weight:500;letter-spacing:.01em}
+.conf .lower .s{font-size:27px;margin-top:4px}
+.conf .lower .t{font-size:28px;font-weight:600;margin-top:2px}
+html[data-os="android"] .conf .lower .m{font-size:34px}
+html[data-os="android"] .conf .lower .s{font-size:22px}
+html[data-os="android"] .conf .lower .t{font-size:23px}
+.conf .code{display:inline-block;background:#000;color:#fff;font-size:32px;font-weight:500;letter-spacing:.02em;padding:14px 22px;border-radius:50%;margin-top:12px;min-width:116px}
+.fab{display:none;position:absolute;left:12px;bottom:14px;width:46px;height:46px;border-radius:50%;background:#000;color:#ddd;place-items:center}
+html[data-os="android"] .conf-view .fab{display:grid}
+
+/* STORICO / PRENOTA */
+.list{padding:12px 12px 24px}
+.sec-t{font-weight:700;color:var(--text-strong);font-size:15px;margin:10px 4px 8px;text-transform:var(--btn-tt);letter-spacing:var(--btn-ls)}
+.row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border-radius:12px;box-shadow:var(--card-shadow);margin-bottom:8px;width:100%;text-align:left}
+html[data-os="android"] .row{border-radius:2px}
+.row .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--primary);color:var(--on-primary)}
+.row .ico.ok{background:var(--green);color:#fff}
+.row .ico.gr{background:#808080;color:#fff}
+.row .mid{flex:1;min-width:0}
+.row .mid b{display:block;font-size:16px;font-weight:600;color:var(--text-strong)}
+.row .mid small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.row .r{font-size:14px;font-weight:600;color:var(--text-strong)}
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:15px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 4px 6px}
+.chip{padding:8px 14px;border-radius:18px;border:1.5px solid var(--primary);color:var(--primary);font-size:14px;font-weight:500}
+html[data-os="android"] .chip{border-radius:3px}
+.chip.on{background:var(--primary);color:var(--on-primary)}
+.sel{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font:inherit;font-size:15px;background:var(--card);color:var(--text-strong);margin:0 0 6px}
+html[data-os="android"] .sel{border-color:#333;border-radius:2px}
+
+/* PANNELLO MODIFICA DATI */
+.edit-box-wrapper{margin-top:20px;border-top:1px dashed var(--hdr-line);padding-top:16px}
+.edit-toggle-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--hdr-line);border-radius:10px;font-size:14px;font-weight:600;color:var(--text-strong);box-shadow:var(--card-shadow)}
+html[data-os="android"] .edit-toggle-btn{border-radius:2px}
+.edit-card{margin-top:12px;background:var(--card);padding:16px;border-radius:12px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;gap:12px}
+.edit-card.hidden{display:none}
+.edit-title{font-size:15px;font-weight:700;color:var(--primary);border-bottom:1px solid var(--hdr-line);padding-bottom:6px;margin-bottom:4px}
+.field-lbl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--text-strong)}
+.ed-input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--hdr-line);background:var(--bg);color:var(--text-strong);font:inherit;font-size:14px}
+html[data-os="android"] .ed-input{border-radius:2px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-sub{padding:8px 12px;background:var(--hdr);border:1px solid var(--hdr-line);border-radius:8px;font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;text-align:center;width:100%}
+.ed-meal-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.ed-meal-row input{flex:1}
+.ed-meal-row input.price-inp{width:75px;flex:none}
+.del-btn{background:#e74c3c;color:#fff;border-radius:6px;width:32px;height:32px;display:grid;place-items:center;font-weight:bold;font-size:14px;flex:none;border:none}
+
+/* MENU DEL GIORNO */
+.dish{padding:12px 14px;border-bottom:1px solid rgba(128,128,128,.2);font-size:15px;color:var(--text-strong)}
+.dish small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+
+/* OVERLAY / LOADING */
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.35);display:none;place-items:center;z-index:30}
+.dim.on{display:grid}
+.loadbox{background:#fff;border-radius:12px;padding:16px 24px;display:flex;align-items:center;gap:18px;min-width:200px;color:#222;font-size:14px;font-weight:600;line-height:1.3}
+html[data-os="android"] .dim{background:rgba(0,0,0,.55)}
+html[data-os="android"] .loadbox{background:#2b2b2b;color:#e6e6e6;border-radius:4px;padding:22px 24px;font-weight:400;font-size:16px;min-width:260px}
+.mspin{display:none;width:36px;height:36px;border-radius:50%;border:4px solid transparent;border-top-color:#6fd3ff;border-right-color:#6fd3ff;animation:rot 1s linear infinite}
+html[data-os="android"] .mspin{display:block}
+html[data-os="android"] .ispin{display:none}
+@keyframes rot{to{transform:rotate(360deg)}}
+.ispin{animation:steps 1s steps(8) infinite}
+@keyframes steps{to{transform:rotate(360deg)}}
+
+/* DRAWER */
+.drawer{position:absolute;inset:0;z-index:40;display:none}
+.drawer.on{display:block}
+.drawer .bk{position:absolute;inset:0;background:rgba(0,0,0,.4)}
+.drawer .panel{position:absolute;left:0;top:0;bottom:0;width:78%;max-width:320px;background:var(--card);padding:0 0 20px;animation:slide .2s ease;overflow:auto}
+@keyframes slide{from{transform:translateX(-100%)}}
+.drawer .ph{padding:28px 18px 18px;background:var(--primary);color:var(--on-primary)}
+.drawer .ph b{display:block;font-size:18px;margin-top:10px}
+.drawer .ph small{opacity:.85}
+.drawer .it{display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;font-size:16px;color:var(--text-strong);text-align:left}
+.drawer .note{font-size:12px;color:var(--muted);padding:10px 18px;line-height:1.45}
+.seg{display:flex;margin:4px 18px 8px;border:1.5px solid var(--primary);border-radius:8px;overflow:hidden}
+.seg button{flex:1;padding:9px 0;color:var(--primary);font-weight:600}
+.seg button.on{background:var(--primary);color:var(--on-primary)}
+
+/* MODAL */
+.modal{position:absolute;inset:0;z-index:35;display:none;background:var(--bg);flex-direction:column}
+.modal.on{display:flex}
+.toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;font-size:14px;padding:10px 16px;border-radius:20px;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hdr">
+    <button class="lbtn menu" id="hdrMenu" aria-label="Menu">
+      <svg width="24" height="20" viewBox="0 0 24 20"><path d="M1 3h22M1 10h22M1 17h22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="lbtn" id="hdrBack" aria-label="Indietro" style="display:none">
+      <svg class="ic-chev" width="14" height="24" viewBox="0 0 14 24"><path d="M12 2 2 12l10 10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="ic-arrow" width="24" height="24" viewBox="0 0 24 24"><path d="M20 12H4m7-7-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="bk-txt">&nbsp;Back</span>
+    </button>
+    <div class="title" id="hdrTitle">Servizio Ristorazione</div>
+  </header>
+
+  <main class="screen" id="screen">
+    <!-- HOME -->
+    <section class="view" id="v-home">
+      <div class="home">
+        <div class="avatar oval" data-avatar></div>
+        <div class="who" data-name></div>
+        <button class="btn" id="btnMenu"><span data-ic="cutlery16"></span><span>Menu</span></button>
+        <div class="pills">
+          <div class="pill"><b id="pPasti"></b><span>pasti rimanenti</span></div>
+          <div class="pill"><b id="pScad"></b><span>scadenza</span></div>
+          <div class="pill"><b id="pCred"></b><span>credito</span></div>
+        </div>
+        <div class="meals" id="meals"></div>
+      </div>
+    </section>
+
+    <!-- REGISTRAZIONE -->
+    <section class="view" id="v-reg">
+      <div class="reg"><div class="card">
+        <div class="avatar oval" data-avatar></div>
+        <div class="nm" data-name></div>
+        <div class="mat">Matricola: <span data-mat></span></div>
+        <div class="msg">Avvicina il tuo cellulare al lettore per registrare il pasto selezionato.</div>
+        <div class="search" id="regSearch">Ricerca segnale in corso...</div>
+        <div class="spin" id="regSpin" data-ic="iosspin"></div>
+        <div class="track" id="regTrack"><div class="fill"></div></div>
+      </div></div>
+    </section>
+
+    <!-- RICEVUTA -->
+    <section class="view" id="v-ric">
+      <div class="ric"><div class="card">
+        <div class="head"><div class="avatar" data-avatar></div><div class="nm" data-name></div></div>
+        <div class="big" id="ricMeal"></div>
+        <div class="when" id="ricWhen"></div>
+        <div class="actions" id="ricActions"></div>
+        <div class="state" id="ricState"></div>
+      </div></div>
+    </section>
+
+    <!-- CONFERMA -->
+    <section class="view conf-view" id="v-conf">
+      <div class="conf"><div class="card">
+        <div class="top">
+          <div class="avatar oval" data-avatar></div>
+          <div class="nm" data-name></div>
+          <div class="chk" id="confChk"><svg width="40" height="32" viewBox="0 0 40 32"><path d="M4 17l10 10L36 4" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="lbl" id="confLbl">Pasto confermato</div>
+        </div>
+        <div class="lower">
+          <div class="m" id="confMeal"></div>
+          <div class="s" id="confSede"></div>
+          <div class="t" id="confTime"></div>
+          <div class="code" id="confCode"></div>
+        </div>
+      </div></div>
+      <div style="height:70px"></div>
+      <button class="fab" id="fab" aria-label="Luminosità"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M6 9h12M6 15h12M10 12h4"/></svg></button>
+    </section>
+
+    <!-- PRENOTA -->
+    <section class="view" id="v-pren">
+      <div class="list">
+        <div class="sec-t">Giorno</div>
+        <div class="chips" id="prDays"></div>
+        <div class="sec-t">Fascia</div>
+        <div class="chips" id="prFascia"></div>
+        <div class="sec-t">Mensa</div>
+        <select class="sel" id="prSede"></select>
+        <div class="sec-t">Pasto</div>
+        <div class="meals" id="prMeals"></div>
+      </div>
+    </section>
+
+    <!-- STORICO -->
+    <section class="view" id="v-sto">
+      <div class="list">
+        <div id="stoList"></div>
+
+        <!-- Pannello Modifica Dati -->
+        <div class="edit-box-wrapper">
+          <button class="edit-toggle-btn" id="toggleEditBox">
+            <span>⚙️ Pannello Modifica Dati</span>
+            <span id="editArrow">▼</span>
+          </button>
+          <div class="edit-card hidden" id="editCard">
+            <div class="edit-title">Profilo & Conto</div>
+            
+            <label class="field-lbl">Nome e Cognome
+              <input type="text" id="edNome" class="ed-input">
+            </label>
+            
+            <label class="field-lbl">Matricola
+              <input type="text" id="edMat" class="ed-input">
+            </label>
+            
+            <label class="field-lbl">Foto Profilo (Carica dal dispositivo)
+              <input type="file" id="edAvatarFile" accept="image/*" class="ed-input" style="padding:4px;">
+            </label>
+
+            <label class="field-lbl">Oppure URL Foto
+              <input type="text" id="edAvatarUrl" class="ed-input" placeholder="https://...">
+            </label>
+            
+            <div class="field-row">
+              <label class="field-lbl">Pasti Rimanenti
+                <input type="number" id="edPasti" class="ed-input">
+              </label>
+              <label class="field-lbl">Credito (€)
+                <input type="number" step="0.10" id="edCred" class="ed-input">
+              </label>
+            </div>
+            
+            <label class="field-lbl">Data Scadenza
+              <input type="text" id="edScad" class="ed-input">
+            </label>
+            
+            <label class="field-lbl">Sedi Mensa (separate da virgola)
+              <textarea id="edSedi" class="ed-input" rows="2"></textarea>
+            </label>
+            
+            <div class="edit-title" style="margin-top:10px;">Opzioni Pasto & Prezzi</div>
+            <div id="edMealsContainer"></div>
+            <button class="btn-sub" id="btnAddMealType">+ Aggiungi Tipo Pasto</button>
+            
+            <div class="edit-title" style="margin-top:10px;">Gestione Pasti in Storico</div>
+            <div id="edHistContainer"></div>
+            <button class="btn-sub" id="btnAddHistRecord">+ Aggiungi Pasto allo Storico</button>
+            
+            <button class="btn green" id="btnSaveAllEdits" style="margin-top:14px;min-height:44px;">Salva Tutte le Modifiche</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab on" data-tab="home"><span data-ic="cutlery"></span>Ristorante</button>
+    <button class="tab" data-tab="pren"><span data-ic="book"></span>Prenota Pasto</button>
+    <button class="tab" data-tab="sto"><span data-ic="list"></span>Storico pasti</button>
+  </nav>
+
+  <!-- MENU DEL GIORNO -->
+  <div class="modal" id="mMenu">
+    <header class="hdr"><button class="lbtn" data-close>
+      <svg class="ic-chev" width="14" height="24" viewBox="0 0 14 24"><path d="M12 2 2 12l10 10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="ic-arrow" width="24" height="24" viewBox="0 0 24 24"><path d="M20 12H4m7-7-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="bk-txt">&nbsp;Back</span></button><div class="title">Menu</div></header>
+    <div class="screen"><div class="list" id="menuList"></div></div>
+  </div>
+
+  <div class="dim" id="loading"><div class="loadbox"><span class="ispin" data-ic="iosspin"></span><span class="mspin"></span><span>Caricamento in<br>corso...</span></div></div>
+
+  <div class="drawer" id="drawer"><div class="bk" data-close></div>
+    <div class="panel">
+      <div class="ph"><div class="avatar" data-avatar style="width:56px;height:56px;margin:0"></div><b data-name></b><small>Servizio Ristorazione · Studente</small></div>
+      <div class="note"><b>Aspetto app</b></div>
+      <div class="seg" id="seg"><button data-os="ios">iOS</button><button data-os="android">Android</button></div>
+      <button class="it" id="reset">↺ Azzera dati app</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const DEFAULT_S = {
+  os: null,
+  nome: "MARIO ROSSI",
+  matricola: "0612345",
+  avatarImg: null,
+  pasti: 180,
+  scadenza: "31/10/2027",
+  credito: 6.60,
+  sedi: ["Mensa Santi Romano", "Mensa San Saverio", "Mensa Policlinico"],
+  pastiMenu: [
+    { nome: "Pasto completo",     prezzo: 1.60 },
+    { nome: "Primo e contorno",   prezzo: 0.80 },
+    { nome: "Secondo e contorno", prezzo: 1.00 },
+    { nome: "Pizza",              prezzo: 1.60 },
+    { nome: "Hamburger",          prezzo: 1.60 }
+  ],
+  hist: [],
+  seq: 200 + Math.floor(Math.random()*60)
+};
+
+const CFG = {
+  menuGiorno: {
+    "Primi": ["Pasta al pomodoro", "Risotto ai funghi", "Minestrone di verdure"],
+    "Secondi": ["Pollo arrosto", "Polpette al sugo", "Frittata di zucchine"],
+    "Contorni": ["Patate al forno", "Insalata mista", "Spinaci saltati"],
+    "Frutta / Dessert": ["Frutta di stagione", "Yogurt"]
+  },
+  ricercaMs: 800,
+  caricamentoMs: 1200
+};
+
+/* ================= ICONE ================= */
+const IC = {
+  cutlery: '<svg viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M57.49 47.74l368.43 368.43a37.28 37.28 0 0 1 0 52.72h0a37.29 37.29 0 0 1-52.72 0l-90-91.55A32 32 0 0 1 274 354.91v-5.53a32 32 0 0 0-9.52-22.78l-11.62-10.73a32 32 0 0 0-29.8-7.44h0A48.53 48.53 0 0 1 176.5 295.8L91.07 210.36C40.39 159.68 21.74 83.15 57.49 47.74Z"/><path d="M400 32l-77.25 77.25A64 64 0 0 0 304 154.51v14.86a16 16 0 0 1-4.69 11.32L288 192"/><path d="M320 224l11.31-11.31A16 16 0 0 1 342.63 208h14.86a64 64 0 0 0 45.26-18.75L480 112"/><line x1="440" y1="72" x2="360" y2="152"/><path d="M200 368l-99.72 100.28a40 40 0 0 1-56.56 0h0a40 40 0 0 1 0-56.56L128 328"/></svg>',
+  cutlery16: '<svg width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M57.49 47.74l368.43 368.43a37.28 37.28 0 0 1 0 52.72h0a37.29 37.29 0 0 1-52.72 0l-90-91.55A32 32 0 0 1 274 354.91v-5.53a32 32 0 0 0-9.52-22.78l-11.62-10.73a32 32 0 0 0-29.8-7.44h0A48.53 48.53 0 0 1 176.5 295.8L91.07 210.36C40.39 159.68 21.74 83.15 57.49 47.74Z"/><path d="M400 32l-77.25 77.25A64 64 0 0 0 304 154.51v14.86a16 16 0 0 1-4.69 11.32L288 192"/><path d="M320 224l11.31-11.31A16 16 0 0 1 342.63 208h14.86a64 64 0 0 0 45.26-18.75L480 112"/><line x1="440" y1="72" x2="360" y2="152"/><path d="M200 368l-99.72 100.28a40 40 0 0 1-56.56 0h0a40 40 0 0 1 0-56.56L128 328"/></svg>',
+  book: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M 16 8 C 13 5.5 7.5 4.5 3 6 V 23 C 7.5 21.5 13 22.5 16 25 C 19 22.5 24.5 21.5 29 23 V 6 C 24.5 4.5 19 5.5 16 8 Z"/><path d="M 16 8 V 25"/></svg>',
+  list: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="8" r="1.6" fill="currentColor" stroke="none"/><circle cx="6" cy="16" r="1.6" fill="currentColor" stroke="none"/><circle cx="6" cy="24" r="1.6" fill="currentColor" stroke="none"/><line x1="12" y1="8" x2="27" y2="8"/><line x1="12" y1="16" x2="27" y2="16"/><line x1="12" y1="24" x2="27" y2="24"/></svg>',
+  iosspin: (()=>{let s='<svg width="22" height="22" viewBox="0 0 24 24">';for(let i=0;i<8;i++){s+=`<rect x="11" y="1.5" width="2" height="6" rx="1" fill="#777" opacity="${(0.25+i*0.1).toFixed(2)}" transform="rotate(${i*45} 12 12)"/>`;}return s+'</svg>';})(),
+  check: '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#777" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  checkDark: '<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" style="stroke:var(--green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  receipt: '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 3h14v18a4 4 0 0 1-4 4H5a3 3 0 0 1-3-3v-3h16v3a3 3 0 0 0 3 3"/><path d="M8 19V3l2 1.5L12 3l2 1.5L16 3l2 1.5L20 3M11 9h8M11 13h8M11 16h5"/></svg>',
+  clock: '<svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M12 6v6h-4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  tick: '<svg width="14" height="12" viewBox="0 0 14 12"><path d="M1 6l4 4L13 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  okW: '<svg width="20" height="16" viewBox="0 0 40 32"><path d="M4 17l10 10L36 4" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+const AVATAR = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#b9c6d1"/><circle cx="50" cy="40" r="19" fill="#eef2f5"/><path d="M14 104c2-24 17-36 36-36s34 12 36 36z" fill="#eef2f5"/></svg>';
+
+/* ================= STORAGE ================= */
+const KEY = "mensa-demo-v1";
+function load(){ 
+  try{ 
+    const parsed = JSON.parse(localStorage.getItem(KEY));
+    if(!parsed) return Object.assign({}, DEFAULT_S);
+    return Object.assign({}, DEFAULT_S, parsed);
+  }catch(e){ return Object.assign({}, DEFAULT_S); } 
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let S = load();
+
+/* ================= OS ================= */
+function detectOS(){
+  const q = new URLSearchParams(location.search).get("os");
+  if (q === "android" || q === "ios") return q;
+  if (S.os) return S.os;
+  return /android/i.test(navigator.userAgent) ? "android" : "ios";
+}
+function setOS(os){
+  document.documentElement.dataset.os = os;
+  document.querySelector('meta[name=theme-color]').content = os === "android" ? "#1f1f1f" : "#f7f7f7";
+  document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on", b.dataset.os===os));
+  renderAll();
+}
+
+/* ================= UTILS ================= */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const fmt = ts => { const d=new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const fmtD = ts => fmt(ts).slice(0,10);
+const eur = v => v.toFixed(2) + "€";
+const isA = () => document.documentElement.dataset.os === "android";
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("on"),1800); }
+function fillStatic(){
+  const avatarHtml = S.avatarImg ? `<img src="${S.avatarImg}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">` : AVATAR;
+  document.querySelectorAll("[data-avatar]").forEach(e=>e.innerHTML=avatarHtml);
+  document.querySelectorAll("[data-name]").forEach(e=>e.textContent=S.nome);
+  document.querySelectorAll("[data-mat]").forEach(e=>e.textContent=S.matricola);
+  document.querySelectorAll("[data-ic]").forEach(e=>e.innerHTML=IC[e.dataset.ic]);
+}
+function newCode(){
+  S.seq += 1 + Math.floor(Math.random()*3);
+  const L="ABCDEFGHJKLMNPQRSTUVWXYZ";
+  return S.seq + L[Math.floor(Math.random()*L.length)] + L[Math.floor(Math.random()*L.length)];
+}
+
+/* ================= NAVIGAZIONE ================= */
+let stack = [];
+let current = null;
+let timers = [];
+const clearTimers = () => { timers.forEach(clearTimeout); timers=[]; };
+const TITLES = { home:"Servizio Ristorazione", reg:"Registrazione pasto", ric:"Ricevuta", conf:"Pasto confermato", pren:"Prenota Pasto", sto:"Storico pasti" };
+const ROOT = ["home","pren","sto"];
+
+function show(st, push=true){
+  clearTimers();
+  if (push && current) stack.push(current);
+  current = st;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  $("#v-"+st.v).classList.add("on");
+  $("#screen").scrollTop = 0;
+  const root = ROOT.includes(st.v);
+  $("#hdrMenu").style.display = root ? "" : "none";
+  $("#hdrBack").style.display = root ? "none" : "";
+  $("#tabbar").classList.toggle("hidden", !(root || st.v==="reg"));
+  let title = TITLES[st.v];
+  if (st.v==="conf") title = st.mode==="consumato" ? "Pasto consumato" : "Pasto confermato";
+  $("#hdrTitle").textContent = title;
+  if (root) document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.tab===st.v));
+  R[st.v] && R[st.v](st);
+}
+function back(){
+  if (!stack.length) return show({v:"home"}, false);
+  let prev = stack.pop();
+  while (prev && prev.v==="reg") prev = stack.pop();
+  show(prev || {v:"home"}, false);
+}
+function goRoot(v){ stack=[]; current=null; show({v}); }
+
+/* ================= RENDER ================= */
+const R = {
+  home(){
+    fillStatic();
+    $("#pPasti").textContent = S.pasti;
+    $("#pScad").textContent = S.scadenza;
+    $("#pCred").textContent = Number(S.credito).toFixed(2) + " €";
+    $("#meals").innerHTML = S.pastiMenu.map((m,i)=>`<button class="btn" data-meal="${i}">${m.nome} ${eur(Number(m.prezzo))}</button>`).join("");
+  },
+  reg(st){
+    fillStatic();
+    const tr=$("#regTrack"); tr.classList.remove("done");
+    $("#regSearch").textContent="Ricerca segnale in corso...";
+    $("#regSpin").classList.remove("hide");
+    timers.push(setTimeout(()=>{
+      $("#regSearch").textContent=""; 
+      $("#regSpin").classList.add("hide"); 
+      tr.classList.add("done");
+      timers.push(setTimeout(()=>{
+        $("#loading").classList.add("on");
+        timers.push(setTimeout(()=>{
+          $("#loading").classList.remove("on");
+          const m = S.pastiMenu[st.meal];
+          const rec = { id:Date.now(), meal:m.nome, prezzo:Number(m.prezzo), sede:S.sedi[0]||"Mensa", prenotato:Date.now(), consumato:null, code:null };
+          S.hist.unshift(rec); save();
+          current = null;
+          show({v:"ric", id:rec.id});
+        }, CFG.caricamentoMs));
+      }, 300));
+    }, CFG.ricercaMs));
+  },
+  ric(st){
+    const r = S.hist.find(h=>h.id===st.id); if(!r) return goRoot("home");
+    $("#ricMeal").textContent = r.meal;
+    const A = isA();
+    if (!r.consumato){
+      $("#ricWhen").textContent = "Il tuo pasto è stato prenotato il " + fmt(r.prenotato);
+      $("#ricActions").innerHTML = `<button class="btn green" id="bCons">${A?IC.checkDark:IC.check.replace('stroke="#777"','style="stroke:var(--green)"')}<span>Consuma pasto</span></button>`;
+      $("#ricState").className="state pren"; $("#ricState").innerHTML = IC.tick + "<span>Pasto prenotato</span>";
+      $("#bCons").onclick = ()=>consuma(r);
+    } else {
+      $("#ricWhen").textContent = "Il tuo pasto è stato consumato il " + fmt(r.consumato);
+      $("#ricActions").innerHTML = `<button class="btn grey" id="bShow">${IC.check}<span>Mostra conferma</span></button><button class="btn blue" id="bDl">${IC.receipt}<span>Scarica ricevuta</span></button>`;
+      $("#ricState").className="state cons"; $("#ricState").innerHTML = IC.clock + "<span>Pasto consumato</span>";
+      $("#bShow").onclick = ()=>show({v:"conf", id:r.id, mode:"consumato"});
+      $("#bDl").onclick = ()=>scaricaRicevuta(r);
+    }
+  },
+  conf(st){
+    const r = S.hist.find(h=>h.id===st.id); if(!r) return goRoot("home");
+    const cons = st.mode==="consumato";
+    $("#confChk").classList.toggle("grey", cons);
+    $("#confLbl").textContent = cons ? "Pasto consumato" : "Pasto confermato";
+    $("#confMeal").textContent = r.meal;
+    $("#confSede").textContent = r.sede;
+    $("#confTime").textContent = fmt(r.consumato);
+    $("#confCode").textContent = r.code;
+  },
+  pren(){
+    if (!R._pr) R._pr = { day:0, fascia:0 };
+    const days=[0,1,2].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d;});
+    const nomi=["Oggi","Domani"];
+    $("#prDays").innerHTML = days.map((d,i)=>`<button class="chip ${R._pr.day===i?'on':''}" data-day="${i}">${nomi[i]||fmtD(d.getTime())}</button>`).join("");
+    $("#prFascia").innerHTML = ["Pranzo","Cena"].map((f,i)=>`<button class="chip ${R._pr.fascia===i?'on':''}" data-fa="${i}">${f}</button>`).join("");
+    $("#prSede").innerHTML = (S.sedi||[]).map(s=>`<option>${s}</option>`).join("");
+    $("#prMeals").innerHTML = S.pastiMenu.map((m,i)=>`<button class="btn" data-pmeal="${i}">${m.nome} ${eur(Number(m.prezzo))}</button>`).join("");
+  },
+  sto(){
+    if (!S.hist.length){ $("#stoList").innerHTML = '<div class="empty">Nessun pasto registrato.</div>'; }
+    else {
+      $("#stoList").innerHTML = S.hist.map(h=>{
+        const c=!!h.consumato;
+        return `<button class="row" data-hid="${h.id}"><span class="ico ${c?'gr':'ok'}">${c?IC.okW:IC.tick}</span><span class="mid"><b>${h.meal}</b><small>${h.sede} · ${fmt(c?h.consumato:h.prenotato)}</small><small>${c?'Pasto consumato':'Pasto prenotato'}</small></span><span class="r">${eur(Number(h.prezzo))}</span></button>`;
+      }).join("");
+    }
+    populateEditCard();
+  }
+};
+function renderAll(){ if(current){ const keep=current; R[keep.v] && R[keep.v](keep); } }
+
+/* ================= AZIONI ================= */
+function consuma(r){
+  $("#loading").classList.add("on");
+  timers.push(setTimeout(()=>{
+    $("#loading").classList.remove("on");
+    r.consumato = Date.now();
+    r.code = newCode();
+    S.pasti = Math.max(0, S.pasti-1);
+    S.credito = Math.max(0, +(S.credito - r.prezzo).toFixed(2));
+    save();
+    show({v:"conf", id:r.id, mode:"confermato"});
+  }, CFG.caricamentoMs));
+}
+function scaricaRicevuta(r){
+  const c=document.createElement("canvas"); c.width=600; c.height=760; const g=c.getContext("2d");
+  g.fillStyle="#fff"; g.fillRect(0,0,600,760);
+  g.fillStyle="#111"; g.font="700 30px Barlow, sans-serif"; g.fillText("Ricevuta pasto", 40, 70);
+  g.font="400 20px Barlow, sans-serif"; g.fillStyle="#444";
+  const rows=[["Utente",S.nome],["Matricola",S.matricola],["Pasto",r.meal],["Importo",eur(Number(r.prezzo))],["Mensa",r.sede],["Prenotato",fmt(r.prenotato)],["Consumato",fmt(r.consumato)],["Codice",r.code]];
+  rows.forEach((x,i)=>{ g.fillStyle="#888"; g.fillText(x[0],40,140+i*44); g.fillStyle="#222"; g.fillText(x[1],210,140+i*44); });
+  g.fillStyle="#111"; g.font="600 16px Barlow, sans-serif"; g.fillText("Documento ufficiale valido come ricevuta elettronica.",40,720);
+  const a=document.createElement("a"); a.download=`ricevuta-${r.code}.png`; a.href=c.toDataURL("image/png"); a.click();
+  toast("Ricevuta scaricata");
+}
+
+/* ================= EDITING DATI ================= */
+function populateEditCard(){
+  $("#edNome").value = S.nome || "";
+  $("#edMat").value = S.matricola || "";
+  $("#edAvatarUrl").value = S.avatarImg || "";
+  $("#edPasti").value = S.pasti !== undefined ? S.pasti : 180;
+  $("#edCred").value = S.credito !== undefined ? S.credito : 6.60;
+  $("#edScad").value = S.scadenza || "";
+  $("#edSedi").value = (S.sedi || []).join(", ");
+  
+  renderMealTypesEdit();
+  renderHistItemsEdit();
+}
+
+function renderMealTypesEdit(){
+  const container = $("#edMealsContainer");
+  if(!container) return;
+  container.innerHTML = (S.pastiMenu || []).map((m, i) => `
+    <div class="ed-meal-row">
+      <input type="text" class="ed-input meal-name-inp" value="${m.nome}" data-idx="${i}">
+      <input type="number" step="0.10" class="ed-input price-inp" value="${m.prezzo}" data-idx="${i}">
+      <button type="button" class="del-btn" data-del-meal="${i}">✕</button>
+    </div>
+  `).join("");
+}
+
+function renderHistItemsEdit(){
+  const container = $("#edHistContainer");
+  if (!container) return;
+  container.innerHTML = (S.hist || []).map((h, i) => `
+    <div style="border:1px solid var(--hdr-line);padding:8px;border-radius:8px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:var(--primary);">Pasto #${i+1}</span>
+        <button type="button" class="del-btn" data-del-hist="${i}">✕</button>
+      </div>
+      <div class="field-row">
+        <label class="field-lbl">Nome Pasto
+          <input type="text" class="ed-input hist-meal-inp" value="${h.meal}" data-hidx="${i}">
+        </label>
+        <label class="field-lbl">Prezzo (€)
+          <input type="number" step="0.10" class="ed-input hist-price-inp" value="${h.prezzo}" data-hidx="${i}">
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field-lbl">Sede
+          <input type="text" class="ed-input hist-sede-inp" value="${h.sede||''}" data-hidx="${i}">
+        </label>
+        <label class="field-lbl">Stato
+          <select class="ed-input hist-state-sel" data-hidx="${i}">
+            <option value="prenotato" ${!h.consumato?'selected':''}>Prenotato</option>
+            <option value="consumato" ${h.consumato?'selected':''}>Consumato</option>
+          </select>
+        </label>
+      </div>
+      <label class="field-lbl">Codice Conferma
+        <input type="text" class="ed-input hist-code-inp" value="${h.code||''}" data-hidx="${i}">
+      </label>
+    </div>
+  `).join("");
+}
+
+function saveEditsFromForm(){
+  S.nome = $("#edNome").value.trim() || S.nome;
+  S.matricola = $("#edMat").value.trim() || S.matricola;
+  S.avatarImg = $("#edAvatarUrl").value.trim() || null;
+  S.pasti = parseInt($("#edPasti").value, 10);
+  if(isNaN(S.pasti)) S.pasti = 0;
+  S.credito = parseFloat($("#edCred").value);
+  if(isNaN(S.credito)) S.credito = 0;
+  S.scadenza = $("#edScad").value.trim() || S.scadenza;
+  S.sedi = $("#edSedi").value.split(",").map(s=>s.trim()).filter(Boolean);
+  
+  const mealNameInps = document.querySelectorAll(".meal-name-inp");
+  const priceInps = document.querySelectorAll(".price-inp");
+  const newMenu = [];
+  mealNameInps.forEach((inp, idx) => {
+    const pInp = priceInps[idx];
+    if (inp && pInp && inp.value.trim()){
+      newMenu.push({
+        nome: inp.value.trim(),
+        prezzo: parseFloat(pInp.value) || 0
+      });
+    }
+  });
+  if(newMenu.length > 0) S.pastiMenu = newMenu;
+  
+  const histMealInps = document.querySelectorAll(".hist-meal-inp");
+  histMealInps.forEach((inp) => {
+    const idx = parseInt(inp.dataset.hidx, 10);
+    if (S.hist[idx]){
+      S.hist[idx].meal = inp.value.trim();
+      const pInp = document.querySelector(`.hist-price-inp[data-hidx="${idx}"]`);
+      if(pInp) S.hist[idx].prezzo = parseFloat(pInp.value) || 0;
+      const sInp = document.querySelector(`.hist-sede-inp[data-hidx="${idx}"]`);
+      if(sInp) S.hist[idx].sede = sInp.value.trim();
+      const stSel = document.querySelector(`.hist-state-sel[data-hidx="${idx}"]`);
+      if(stSel){
+        if(stSel.value === "consumato" && !S.hist[idx].consumato){
+          S.hist[idx].consumato = Date.now();
+          if(!S.hist[idx].code) S.hist[idx].code = newCode();
+        } else if(stSel.value === "prenotato"){
+          S.hist[idx].consumato = null;
+        }
+      }
+      const cInp = document.querySelector(`.hist-code-inp[data-hidx="${idx}"]`);
+      if(cInp) S.hist[idx].code = cInp.value.trim() || S.hist[idx].code;
+    }
+  });
+
+  save();
+  fillStatic();
+  renderAll();
+  toast("Dati aggiornati!");
+}
+
+function openMenu(){
+  $("#menuList").innerHTML = Object.entries(CFG.menuGiorno).map(([k,v])=>`<div class="sec-t">${k}</div><div class="card">${v.map(d=>`<div class="dish">${d}</div>`).join("")}</div>`).join("");
+  $("#mMenu").classList.add("on");
+}
+
+/* ================= EVENTI ================= */
+document.addEventListener("click", e=>{
+  const delMeal = e.target.closest("[data-del-meal]");
+  if(delMeal){
+    const idx = parseInt(delMeal.dataset.delMeal, 10);
+    S.pastiMenu.splice(idx, 1);
+    renderMealTypesEdit();
+    return;
+  }
+  const delHist = e.target.closest("[data-del-hist]");
+  if(delHist){
+    const idx = parseInt(delHist.dataset.delHist, 10);
+    S.hist.splice(idx, 1);
+    if(R.sto) R.sto();
+    return;
+  }
+  const t=e.target.closest("button,[data-close]"); if(!t) return;
+  if (t.dataset.meal!==undefined) return show({v:"reg", meal:+t.dataset.meal});
+  if (t.dataset.tab) return goRoot(t.dataset.tab);
+  if (t.dataset.hid) return show({v:"ric", id:+t.dataset.hid});
+  if (t.dataset.day!==undefined){ R._pr.day=+t.dataset.day; return R.pren(); }
+  if (t.dataset.fa!==undefined){ R._pr.fascia=+t.dataset.fa; return R.pren(); }
+  if (t.dataset.pmeal!==undefined){
+    const m=S.pastiMenu[+t.dataset.pmeal];
+    const rec={ id:Date.now(), meal:m.nome, prezzo:m.prezzo, sede:$("#prSede").value, prenotato:Date.now(), consumato:null, code:null };
+    S.hist.unshift(rec); save(); toast("Pasto prenotato");
+    return show({v:"ric", id:rec.id});
+  }
+  if (t.dataset.os){ S.os=t.dataset.os; save(); setOS(S.os); $("#drawer").classList.remove("on"); return; }
+  if (t.hasAttribute("data-close")){ t.closest(".drawer,.modal").classList.remove("on"); return; }
+});
+
+$("#toggleEditBox").onclick = () => {
+  const card = $("#editCard");
+  const isHidden = card.classList.contains("hidden");
+  card.classList.toggle("hidden", !isHidden);
+  $("#editArrow").textContent = isHidden ? "▲" : "▼";
+};
+
+$("#btnAddMealType").onclick = () => {
+  S.pastiMenu.push({ nome: "Nuovo pasto", prezzo: 1.50 });
+  renderMealTypesEdit();
+};
+
+$("#btnAddHistRecord").onclick = () => {
+  const m = S.pastiMenu[0] || { nome: "Pasto completo", prezzo: 1.60 };
+  S.hist.unshift({
+    id: Date.now(),
+    meal: m.nome,
+    prezzo: m.prezzo,
+    sede: (S.sedi && S.sedi[0]) ? S.sedi[0] : "Mensa",
+    prenotato: Date.now(),
+    consumato: Date.now(),
+    code: newCode()
+  });
+  if (R.sto) R.sto();
+};
+
+$("#edAvatarFile").onchange = function(e){
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      $("#edAvatarUrl").value = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+$("#btnSaveAllEdits").onclick = saveEditsFromForm;
+
+$("#hdrBack").onclick = back;
+$("#hdrMenu").onclick = ()=>$("#drawer").classList.add("on");
+$("#btnMenu").onclick = openMenu;
+$("#fab").onclick = ()=>toast("Luminosità massima");
+$("#reset").onclick = ()=>{ 
+  S = Object.assign({}, DEFAULT_S, { os: S.os }); 
+  save(); 
+  $("#drawer").classList.remove("on"); 
+  goRoot("home"); 
+  toast("Dati ripristinati"); 
+};
+
+/* ================= AVVIO ================= */
+fillStatic();
+document.documentElement.dataset.os = detectOS();
+show({v:"home"}, false);
+setOS(document.documentElement.dataset.os);
+})();
+</script>
+</body>
+</html>
