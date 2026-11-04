@@ -32,8 +32,6 @@
   --font:"Barlow",system-ui,sans-serif;
   --top:0px;
 }
-/* Quando l'app è aperta dalla schermata Home (iOS/Android) abbassa un po' l'intestazione.
-   Per spostarla di più o di meno cambia il 14px qui sotto. */
 @media all and (display-mode: standalone){
   :root{ --top:max(env(safe-area-inset-top,0px),14px); }
 }
@@ -171,7 +169,7 @@ html[data-os="android"] .conf .lower .t{font-size:23px}
 .fab{display:none;position:absolute;left:12px;bottom:14px;width:46px;height:46px;border-radius:50%;background:#000;color:#ddd;place-items:center}
 html[data-os="android"] .conf-view .fab{display:grid}
 
-/* STORICO / PRENOTA */
+/* STORICO / PRENOTA / MENU SETTINGS */
 .list{padding:12px 12px 24px}
 .sec-t{font-weight:700;color:var(--text-strong);font-size:15px;margin:10px 4px 8px;text-transform:var(--btn-tt);letter-spacing:var(--btn-ls)}
 .row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border-radius:12px;box-shadow:var(--card-shadow);margin-bottom:8px;width:100%;text-align:left}
@@ -184,12 +182,6 @@ html[data-os="android"] .row{border-radius:2px}
 .row .mid small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
 .row .r{font-size:14px;font-weight:600;color:var(--text-strong)}
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:15px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 4px 6px}
-.chip{padding:8px 14px;border-radius:18px;border:1.5px solid var(--primary);color:var(--primary);font-size:14px;font-weight:500}
-html[data-os="android"] .chip{border-radius:3px}
-.chip.on{background:var(--primary);color:var(--on-primary)}
-.sel{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font:inherit;font-size:15px;background:var(--card);color:var(--text-strong);margin:0 0 6px}
-html[data-os="android"] .sel{border-color:#333;border-radius:2px}
 
 /* PANNELLO MODIFICA DATI */
 .edit-box-wrapper{margin-top:20px;border-top:1px dashed var(--hdr-line);padding-top:16px}
@@ -321,17 +313,21 @@ html[data-os="android"] .ispin{display:none}
       <button class="fab" id="fab" aria-label="Luminosità"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M6 9h12M6 15h12M10 12h4"/></svg></button>
     </section>
 
-    <!-- PRENOTA -->
+    <!-- EX "PRENOTA", ORA IMPOSTAZIONI VELOCITA' -->
     <section class="view" id="v-pren">
       <div class="list">
-        <div class="sec-t">Giorno</div>
-        <div class="chips" id="prDays"></div>
-        <div class="sec-t">Fascia</div>
-        <div class="chips" id="prFascia"></div>
-        <div class="sec-t">Mensa</div>
-        <select class="sel" id="prSede"></select>
-        <div class="sec-t">Pasto</div>
-        <div class="meals" id="prMeals"></div>
+        <div class="sec-t">Regolazione Tempi Interfaccia (ms)</div>
+        <div class="card" style="padding: 16px; display:flex; flex-direction:column; gap:16px;">
+          <label class="field-lbl">Attesa finta ricerca segnale NFC/GPS
+            <input type="number" id="cfgRicerca" class="ed-input" step="100">
+          </label>
+          <label class="field-lbl">Attesa finta generazione ricevuta
+            <input type="number" id="cfgCaricamento" class="ed-input" step="100">
+          </label>
+          <div style="font-size:12px; color:var(--muted); line-height:1.4">
+            Modifica i tempi di caricamento che appaiono mentre l'app elabora la finta prenotazione/riscatto del pasto. Il salvataggio è automatico.
+          </div>
+        </div>
       </div>
     </section>
 
@@ -380,6 +376,11 @@ html[data-os="android"] .ispin{display:none}
 
             <label class="field-lbl">Sedi Mensa (separate da virgola)
               <textarea id="edSedi" class="ed-input" rows="2"></textarea>
+            </label>
+
+            <!-- NUOVO CAMPO: CODICE DI CONFERMA FISSO GLOBALE -->
+            <label class="field-lbl" style="margin-top:6px; color:var(--primary)">Codice Conferma Globale Falso (opzionale)
+              <input type="text" id="edFixedCode" class="ed-input" placeholder="Es. 210AB (lascia vuoto per casuale)">
             </label>
 
             <div class="edit-title" style="margin-top:10px;">Opzioni Pasto & Prezzi</div>
@@ -447,7 +448,10 @@ const DEFAULT_S = {
     { nome: "Hamburger",          prezzo: 1.60 }
   ],
   hist: [],
-  seq: 200 + Math.floor(Math.random()*60)
+  seq: 200 + Math.floor(Math.random()*60),
+  fixedCode: "",
+  ricercaMs: 800,
+  caricamentoMs: 1200
 };
 
 const CFG = {
@@ -456,9 +460,7 @@ const CFG = {
     "Secondi": ["Pollo arrosto", "Polpette al sugo", "Frittata di zucchine"],
     "Contorni": ["Patate al forno", "Insalata mista", "Spinaci saltati"],
     "Frutta / Dessert": ["Frutta di stagione", "Yogurt"]
-  },
-  ricercaMs: 800,
-  caricamentoMs: 1200
+  }
 };
 
 /* ================= ICONE ================= */
@@ -488,6 +490,8 @@ function load(){
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 let S = load();
+if (S.ricercaMs === undefined) S.ricercaMs = 800;
+if (S.caricamentoMs === undefined) S.caricamentoMs = 1200;
 
 /* ================= OS ================= */
 function detectOS(){
@@ -519,6 +523,7 @@ function fillStatic(){
   document.querySelectorAll("[data-ic]").forEach(e=>e.innerHTML=IC[e.dataset.ic]);
 }
 function newCode(){
+  if (S.fixedCode && S.fixedCode.trim() !== "") return S.fixedCode.trim();
   S.seq += 1 + Math.floor(Math.random()*3);
   const L="ABCDEFGHJKLMNPQRSTUVWXYZ";
   return S.seq + L[Math.floor(Math.random()*L.length)] + L[Math.floor(Math.random()*L.length)];
@@ -529,7 +534,7 @@ let stack = [];
 let current = null;
 let timers = [];
 const clearTimers = () => { timers.forEach(clearTimeout); timers=[]; };
-const TITLES = { home:"Servizio Ristorazione", reg:"Registrazione pasto", ric:"Ricevuta", conf:"Pasto confermato", pren:"Prenota Pasto", sto:"Storico pasti" };
+const TITLES = { home:"Servizio Ristorazione", reg:"Registrazione pasto", ric:"Ricevuta", conf:"Pasto confermato", pren:"Opzioni Sistema", sto:"Storico pasti" };
 const ROOT = ["home","pren","sto"];
 
 function show(st, push=true){
@@ -584,9 +589,9 @@ const R = {
           S.hist.unshift(rec); save();
           current = null;
           show({v:"ric", id:rec.id});
-        }, CFG.caricamentoMs));
+        }, S.caricamentoMs));
       }, 300));
-    }, CFG.ricercaMs));
+    }, S.ricercaMs));
   },
   ric(st){
     const r = S.hist.find(h=>h.id===st.id); if(!r) return goRoot("home");
@@ -620,13 +625,11 @@ const R = {
     };
   },
   pren(){
-    if (!R._pr) R._pr = { day:0, fascia:0 };
-    const days=[0,1,2].map(i=>{const d=new Date();d.setDate(d.getDate()+i);return d;});
-    const nomi=["Oggi","Domani"];
-    $("#prDays").innerHTML = days.map((d,i)=>`<button class="chip ${R._pr.day===i?'on':''}" data-day="${i}">${nomi[i]||fmtD(d.getTime())}</button>`).join("");
-    $("#prFascia").innerHTML = ["Pranzo","Cena"].map((f,i)=>`<button class="chip ${R._pr.fascia===i?'on':''}" data-fa="${i}">${f}</button>`).join("");
-    $("#prSede").innerHTML = (S.sedi||[]).map(s=>`<option>${s}</option>`).join("");
-    $("#prMeals").innerHTML = S.pastiMenu.map((m,i)=>`<button class="btn" data-pmeal="${i}">${m.nome} ${eur(Number(m.prezzo))}</button>`).join("");
+    // Ora è la schermata "Impostazioni Velocità"
+    $("#cfgRicerca").value = S.ricercaMs;
+    $("#cfgCaricamento").value = S.caricamentoMs;
+    $("#cfgRicerca").onchange = e => { S.ricercaMs = parseInt(e.target.value)||0; save(); toast("Salvato"); };
+    $("#cfgCaricamento").onchange = e => { S.caricamentoMs = parseInt(e.target.value)||0; save(); toast("Salvato"); };
   },
   sto(){
     if (!S.hist.length){ $("#stoList").innerHTML = '<div class="empty">Nessun pasto registrato.</div>'; }
@@ -652,7 +655,7 @@ function consuma(r){
     S.credito = Math.max(0, +(S.credito - r.prezzo).toFixed(2));
     save();
     show({v:"conf", id:r.id, mode:"confermato"});
-  }, CFG.caricamentoMs));
+  }, S.caricamentoMs));
 }
 function scaricaRicevuta(r){
   const c=document.createElement("canvas"); c.width=600; c.height=760; const g=c.getContext("2d");
@@ -675,6 +678,7 @@ function populateEditCard(){
   $("#edCred").value = S.credito !== undefined ? S.credito : 6.60;
   $("#edScad").value = S.scadenza || "";
   $("#edSedi").value = (S.sedi || []).join(", ");
+  $("#edFixedCode").value = S.fixedCode || "";
 
   renderMealTypesEdit();
   renderHistItemsEdit();
@@ -737,6 +741,7 @@ function saveEditsFromForm(){
   if(isNaN(S.credito)) S.credito = 0;
   S.scadenza = $("#edScad").value.trim() || S.scadenza;
   S.sedi = $("#edSedi").value.split(",").map(s=>s.trim()).filter(Boolean);
+  S.fixedCode = $("#edFixedCode").value.trim();
 
   const mealNameInps = document.querySelectorAll(".meal-name-inp");
   const priceInps = document.querySelectorAll(".price-inp");
@@ -806,14 +811,6 @@ document.addEventListener("click", e=>{
   if (t.dataset.meal!==undefined) return show({v:"reg", meal:+t.dataset.meal});
   if (t.dataset.tab) return goRoot(t.dataset.tab);
   if (t.dataset.hid) return show({v:"ric", id:+t.dataset.hid});
-  if (t.dataset.day!==undefined){ R._pr.day=+t.dataset.day; return R.pren(); }
-  if (t.dataset.fa!==undefined){ R._pr.fascia=+t.dataset.fa; return R.pren(); }
-  if (t.dataset.pmeal!==undefined){
-    const m=S.pastiMenu[+t.dataset.pmeal];
-    const rec={ id:Date.now(), meal:m.nome, prezzo:m.prezzo, sede:$("#prSede").value, prenotato:Date.now(), consumato:null, code:null };
-    S.hist.unshift(rec); save(); toast("Pasto prenotato");
-    return show({v:"ric", id:rec.id});
-  }
   if (t.dataset.os){ S.os=t.dataset.os; save(); setOS(S.os); $("#drawer").classList.remove("on"); return; }
   if (t.hasAttribute("data-close")){ t.closest(".drawer,.modal").classList.remove("on"); return; }
 });
