@@ -167,6 +167,7 @@ html[data-os="android"] .conf .lower .m{font-size:34px}
 html[data-os="android"] .conf .lower .s{font-size:22px}
 html[data-os="android"] .conf .lower .t{font-size:23px}
 .conf .code{display:inline-block;background:#000;color:#fff;font-size:32px;font-weight:500;letter-spacing:.02em;padding:14px 22px;border-radius:50%;margin-top:12px;min-width:116px}
+  .conf .code:focus { outline: none; }
 .fab{display:none;position:absolute;left:12px;bottom:14px;width:46px;height:46px;border-radius:50%;background:#000;color:#ddd;place-items:center}
 html[data-os="android"] .conf-view .fab{display:grid}
 
@@ -313,7 +314,7 @@ html[data-os="android"] .ispin{display:none}
           <div class="m" id="confMeal"></div>
           <div class="s" id="confSede"></div>
           <div class="t" id="confTime"></div>
-          <div class="code" id="confCode"></div>
+          <div class="code" id="confCode" contenteditable="true" spellcheck="false" autocorrect="off"></div>
         </div>
       </div></div>
       <div style="height:70px"></div>
@@ -613,6 +614,10 @@ const R = {
     $("#confSede").textContent = r.sede;
     $("#confTime").textContent = fmt(r.consumato);
     $("#confCode").textContent = r.code;
+    $("#confCode").onblur = function() {
+      r.code = this.textContent.trim();
+      save();
+    };
   },
   pren(){
     if (!R._pr) R._pr = { day:0, fascia:0 };
